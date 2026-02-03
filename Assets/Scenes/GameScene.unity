@@ -284,10 +284,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b9ab7953b3033749a5a79b5aa1aa4d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 5827530285238215962, guid: d3e7338ea2c57124d856f182636f8afa, type: 3}
-  ringManager: {fileID: 669459617}
-  scoreText: {fileID: 2028737397}
-  gameOverText: {fileID: 503061054}
+  scoreDisplay: {fileID: 0}
 --- !u!4 &508151793
 Transform:
   m_ObjectHideFlags: 0
@@ -1678,7 +1675,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5827530285238215962, guid: d3e7338ea2c57124d856f182636f8afa, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

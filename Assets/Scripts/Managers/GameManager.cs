@@ -1,102 +1,77 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private Player player;
-    [SerializeField] private RingManager ringManager;
-    [SerializeField] private TextMeshProUGUI scoreText;
-    [SerializeField] private TextMeshProUGUI gameOverText;
+    public static GameManager instance;
     
-    private int score = 0;
-    private bool isGameOver = false;
-    private int scoreThreshold = 3; // Difficulty increases every 3 rings
-    
+    [SerializeField]
+    private TextMeshProUGUI scoreDisplay;
+
+    private int score;
+    private bool isGameOver;
+
+    public Action OnGameOver;
+
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else if (instance != this)
+        {
+            // Destroy duplicate instance
+            Destroy(gameObject);
+        }
+    }
+
     private void Start()
-    {
-        // Validate all references
-        if (player == null)
-        {
-            Debug.LogError("GameManager: Player not assigned!");
-        }
-        if (ringManager == null)
-        {
-            Debug.LogError("GameManager: RingManager not assigned!");
-        }
-        if (scoreText == null)
-        {
-            Debug.LogError("GameManager: Score Text not assigned!");
-        }
-        if (gameOverText == null)
-        {
-            Debug.LogError("GameManager: Game Over Text not assigned!");
-        }
-        
-        StartGame();
-    }
-    
-    private void Update()
-    {
-        if (isGameOver && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
-        {
-            Restart();
-        }
-    }
-    
-    public void StartGame()
     {
         score = 0;
         isGameOver = false;
-        
-        if (ringManager != null) ringManager.ResetRings();
-        if (player != null) player.ResetPlayer();
-        if (gameOverText != null) gameOverText.gameObject.SetActive(false);
-        
-        UpdateScoreUI();
-        Debug.Log("Game started!");
+        UpdateScoreDisplay();
     }
-    
-    public void AddScore(int points)
+
+    public void ChangeScore(int amount)
     {
-        if (isGameOver) return;
-        
-        score += points;
-        UpdateScoreUI();
-        
-        Debug.Log($"Score: {score}");
-        
-        // Increase difficulty every X rings
-        if (score % scoreThreshold == 0)
+        score += amount;
+        UpdateScoreDisplay();
+        Debug.Log("Score changed by: " + amount + " | Total: " + score);
+    }
+
+    public void SetGameOver()
+    {
+        if (!isGameOver)
         {
-            if (ringManager != null)
+            isGameOver = true;
+            Debug.Log("Game Over! Final Score: " + score);
+            
+            if (OnGameOver != null)
             {
-                ringManager.IncreaseDifficulty();
+                OnGameOver.Invoke();
             }
         }
     }
-    
-    public void GameOver()
+
+    public bool GetGameOver()
     {
-        isGameOver = true;
-        Debug.Log($"GAME OVER! Final Score: {score}");
-        
-        if (gameOverText != null)
-        {
-            gameOverText.gameObject.SetActive(true);
-            gameOverText.text = $"Game Over!\nScore: {score}\n\nPress SPACE to Restart";
-        }
+        return isGameOver;
     }
-    
-    private void Restart()
+
+    public int GetScore()
     {
-        StartGame();
+        return score;
     }
-    
-    private void UpdateScoreUI()
+
+    private void UpdateScoreDisplay()
     {
-        if (scoreText != null)
+        if (scoreDisplay != null)
         {
-            scoreText.text = $"Score: {score}";
+            scoreDisplay.text = score.ToString();
         }
     }
 }
