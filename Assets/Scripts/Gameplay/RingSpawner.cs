@@ -4,41 +4,47 @@ using UnityEngine;
 
 public class RingSpawner : MonoBehaviour
 {
-    [SerializeField]
-    private CollisionDetector rimLeft;
-    [SerializeField]
-    private CollisionDetector rimRight;
-    [SerializeField]
-    private CollisionDetector centerTrigger;
-    [SerializeField]
-    private Transform player;
-    [SerializeField]
-    private float missedRange = 4f;
-    [SerializeField]
-    private float spawnDistance = 5f;
-    [SerializeField]
-    private ParticleSystem perfectCombo1;
-    [SerializeField]
-    private ParticleSystem perfectCombo2;
-    [SerializeField]
-    private ParticleSystem perfectCombo3;
+    [SerializeField] private Transform player;
+    [SerializeField] private float missedRange = 4f;
+    [SerializeField] private float spawnDistance = 5f;
 
-    [HideInInspector]
-    public int ringIndex;
-    [HideInInspector]
-    public int consecutiveCombo = 1;
+    // Rim collision detection
+    [SerializeField] private Collider2D rimLeftCollider;
+    [SerializeField] private Collider2D rimRightCollider;
+
+    // Particles for combos
+    [SerializeField] private ParticleSystem perfectCombo1;
+    [SerializeField] private ParticleSystem perfectCombo2;
+    [SerializeField] private ParticleSystem perfectCombo3;
+
+    [HideInInspector] public int ringIndex;
+    [HideInInspector] public int consecutiveCombo = 1;
 
     private bool hasSpawned = false;
+    private bool hasBeenScored = false;
     private RingSpawner nextRing;
+    private bool rimLeftTouched = false;
+    private bool rimRightTouched = false;
+
+    private void Start()
+    {
+        if (player == null)
+        {
+            Debug.LogError("RingSpawner [" + ringIndex + "]: Player not assigned!");
+        }
+    }
 
     void Update()
     {
         if (player == null) return;
 
-        // Game over if player passed ring without going through center
-        if (player.position.x > transform.position.x + missedRange)
+        // Game over if player passed ring without scoring
+        if (player.position.x > transform.position.x + missedRange && !hasBeenScored)
         {
+            Debug.Log("Ring [" + ringIndex + "]: Player MISSED - Game Over!");
             GameManager.instance.SetGameOver();
+            Destroy(gameObject);
+            return;
         }
 
         // Spawn next ring when player approaches
@@ -51,72 +57,102 @@ public class RingSpawner : MonoBehaviour
     private void SpawnNextRing()
     {
         GameObject newRing = Instantiate(gameObject);
+        newRing.transform.position = new Vector3(transform.position.x + 5f, Random.Range(-2f, 2f), 0f);
+
         ScreenPositioner positioner = newRing.GetComponent<ScreenPositioner>();
-        
         if (positioner != null)
         {
             positioner.enabled = false;
         }
 
-        newRing.transform.position = new Vector3(transform.position.x + 5f, Random.Range(-2f, 2f), 0f);
         nextRing = newRing.GetComponent<RingSpawner>();
-        
+
         if (nextRing != null)
         {
             nextRing.ringIndex = ringIndex + 1;
             newRing.name = "Ring_" + nextRing.ringIndex;
         }
-        
+
         hasSpawned = true;
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    // Called when player enters center trigger
+    public void OnCenterTriggerEnter(Rigidbody2D playerRb)
     {
-        // Check if we successfully went through center
-        if (centerTrigger != null && centerTrigger.GetHasCollided() && nextRing != null)
-        {
-            bool hitLeftRim = (rimLeft != null && rimLeft.GetHasCollided());
-            bool hitRightRim = (rimRight != null && rimRight.GetHasCollided());
+        if (hasBeenScored) return;
 
-            if (!hitLeftRim && !hitRightRim)
+        hasBeenScored = true;
+
+        // Check velocity - if moving UP (from bottom) = game over
+        if (playerRb.linearVelocity.y > 0.5f)
+        {
+            Debug.Log("Ring [" + ringIndex + "]: Entered from BOTTOM (moving up) - Game Over!");
+            GameManager.instance.SetGameOver();
+            Destroy(gameObject);
+            return;
+        }
+
+        // Player entered from top (moving down) = SCORE
+        Debug.Log("Ring [" + ringIndex + "]: Entered from TOP (moving down) - SCORING!");
+
+        if (nextRing != null)
+        {
+            // Check if rims were touched
+            bool touchedLeftRim = rimLeftTouched;
+            bool touchedRightRim = rimRightTouched;
+
+            if (!touchedLeftRim && !touchedRightRim)
             {
-                // Perfect pass - no rim collision
+                // Perfect pass - no rim touch
                 nextRing.consecutiveCombo = consecutiveCombo + 1;
 
                 if (nextRing.consecutiveCombo == 2)
                 {
                     GameManager.instance.ChangeScore(4);
-                    PlayParticleEffect(perfectCombo1);
+                    PlayParticle(perfectCombo1);
+                    Debug.Log("Ring [" + ringIndex + "]: Perfect x2! +4 points");
                 }
                 else if (nextRing.consecutiveCombo == 3)
                 {
                     GameManager.instance.ChangeScore(6);
-                    PlayParticleEffect(perfectCombo2);
+                    PlayParticle(perfectCombo2);
+                    Debug.Log("Ring [" + ringIndex + "]: Perfect x3! +6 points");
                 }
                 else if (nextRing.consecutiveCombo > 3)
                 {
                     GameManager.instance.ChangeScore(8);
-                    PlayParticleEffect(perfectCombo3);
+                    PlayParticle(perfectCombo3);
+                    Debug.Log("Ring [" + ringIndex + "]: Perfect x4+! +8 points");
                 }
             }
             else
             {
-                // Hit rim - reset combo to 1
+                // Hit rim - reset combo
                 nextRing.consecutiveCombo = 1;
                 GameManager.instance.ChangeScore(2);
                 StopAllParticles();
+                Debug.Log("Ring [" + ringIndex + "]: Hit rim! +2 points");
             }
-        }
-        else
-        {
-            // Missed the ring entirely
-            GameManager.instance.SetGameOver();
         }
 
         Destroy(gameObject);
     }
 
-    private void PlayParticleEffect(ParticleSystem particle)
+    // Called when player touches left rim
+    public void OnRimLeftEnter()
+    {
+        rimLeftTouched = true;
+        Debug.Log("Ring [" + ringIndex + "]: Player touched LEFT rim");
+    }
+
+    // Called when player touches right rim
+    public void OnRimRightEnter()
+    {
+        rimRightTouched = true;
+        Debug.Log("Ring [" + ringIndex + "]: Player touched RIGHT rim");
+    }
+
+    private void PlayParticle(ParticleSystem particle)
     {
         if (particle != null)
         {
