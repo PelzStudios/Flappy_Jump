@@ -100,7 +100,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.017397225, y: 0.3609276}
+  m_Offset: {x: 0.0011394024, y: 0.32397783}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -110,7 +110,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.4827319, y: 0.43764764}
+  m_Size: {x: 1.4502163, y: 0.31645274}
   m_EdgeRadius: 0
 --- !u!114 &1077211617469951241
 MonoBehaviour:
@@ -191,8 +191,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -1.3841573, y: 0.31778952}
-  m_Radius: 0.5705779
+  m_Offset: {x: -1.3646017, y: 0.28519723}
+  m_Radius: 0.42282456
 --- !u!114 &6425461759623997589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,8 +273,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 1.381581, y: 0.2999392}
-  m_Radius: 0.5543949
+  m_Offset: {x: 1.3530982, y: 0.28344914}
+  m_Radius: 0.42247406
 --- !u!114 &4564946631837097148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -424,7 +424,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 0}
-  missedRange: 4
+  missedRange: 3
   spawnDistance: -3
   rimLeftCollider: {fileID: 2765406755946428110}
   rimRightCollider: {fileID: 6126987726647458185}

@@ -26,7 +26,7 @@ public class PlayerController : MonoBehaviour {
 
     void Update()
     {
-        if (Input.GetButtonDown(m_Input) && !GameManager.instance.GetGameOver())
+        if (GameManager.instance.IsGameActive() && Input.GetButtonDown(m_Input) && !GameManager.instance.GetGameOver())
         {
             Jump();
         }
