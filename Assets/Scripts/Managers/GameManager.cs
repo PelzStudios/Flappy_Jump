@@ -10,7 +10,6 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     
     private int score;
-    private int highScore;
     private bool isGameOver;
     private bool isGameActive;
 
@@ -34,7 +33,6 @@ public class GameManager : MonoBehaviour
         // Game starts in "Menu" state
         isGameActive = false;
         score = 0;
-        highScore = PlayerPrefs.GetInt("HighScore", 0);
         isGameOver = false;
         
         if (UIManager.instance != null)
@@ -77,12 +75,9 @@ public class GameManager : MonoBehaviour
             isGameOver = true;
             Debug.Log("Game Over! Final Score: " + score);
             
-            if (score > highScore)
+            if (ScoreManager.Instance != null && DifficultyManager.Instance != null)
             {
-                highScore = score;
-                PlayerPrefs.SetInt("HighScore", highScore);
-                PlayerPrefs.Save();
-                Debug.Log("New High Score: " + highScore);
+                ScoreManager.Instance.SubmitScore(score, DifficultyManager.Instance.currentLevel);
             }
 
             if (OnGameOver != null)
@@ -102,10 +97,7 @@ public class GameManager : MonoBehaviour
         return score;
     }
 
-    public int GetHighScore()
-    {
-        return highScore;
-    }
+
 
 
 

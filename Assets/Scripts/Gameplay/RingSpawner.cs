@@ -56,8 +56,18 @@ public class RingSpawner : MonoBehaviour
 
     private void SpawnNextRing()
     {
+        float distance = 5f;
+        float variance = 2f;
+
+        if (DifficultyManager.Instance != null)
+        {
+            DifficultyProfile profile = DifficultyManager.Instance.GetCurrentProfile();
+            distance = profile.ringSpawnDistance;
+            variance = profile.ringHeightVariance;
+        }
+
         GameObject newRing = Instantiate(gameObject);
-        newRing.transform.position = new Vector3(transform.position.x + 5f, Random.Range(-2f, 2f), 0f);
+        newRing.transform.position = new Vector3(transform.position.x + distance, Random.Range(-variance, variance), 0f);
 
         ScreenPositioner positioner = newRing.GetComponent<ScreenPositioner>();
         if (positioner != null)
@@ -110,18 +120,21 @@ public class RingSpawner : MonoBehaviour
                 {
                     GameManager.instance.ChangeScore(4);
                     PlayParticle(perfectCombo1);
+                    if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.1f, 0.1f);
                     Debug.Log("Ring [" + ringIndex + "]: Perfect x2! +4 points");
                 }
                 else if (nextRing.consecutiveCombo == 3)
                 {
                     GameManager.instance.ChangeScore(6);
                     PlayParticle(perfectCombo2);
+                    if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.15f, 0.15f);
                     Debug.Log("Ring [" + ringIndex + "]: Perfect x3! +6 points");
                 }
                 else if (nextRing.consecutiveCombo > 3)
                 {
                     GameManager.instance.ChangeScore(8);
                     PlayParticle(perfectCombo3);
+                    if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.2f, 0.2f);
                     Debug.Log("Ring [" + ringIndex + "]: Perfect x4+! +8 points");
                 }
             }

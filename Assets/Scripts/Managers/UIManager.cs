@@ -15,15 +15,23 @@ public class UIManager : MonoBehaviour
 
     [Header("HUD References")]
     [SerializeField] private TextMeshProUGUI scoreText;
+    [SerializeField] private TextMeshProUGUI hudHighScoreText;
 
     [Header("Home References")]
     [SerializeField] private Button playButton;
+    [SerializeField] private Slider difficultySlider;
+    [SerializeField] private TextMeshProUGUI difficultyLabel;
 
     [Header("Game Over References")]
     [SerializeField] private TextMeshProUGUI finalScoreText;
-    [SerializeField] private TextMeshProUGUI highScoreText;
     [SerializeField] private Button restartButton;
     [SerializeField] private Button homeButton;
+    
+    [Header("Leaderboard References")]
+    [SerializeField] private TextMeshProUGUI difficultyModeText;
+    [SerializeField] private TextMeshProUGUI todayBestText;
+    [SerializeField] private TextMeshProUGUI weekBestText;
+    [SerializeField] private TextMeshProUGUI allTimeBestText;
 
     private void Awake()
     {
@@ -56,6 +64,35 @@ public class UIManager : MonoBehaviour
 
         if (homeButton != null)
             homeButton.onClick.AddListener(OnHomeClicked);
+
+        // Setup difficulty slider
+        if (difficultySlider != null)
+        {
+            difficultySlider.onValueChanged.AddListener(OnDifficultyChanged);
+            // Initialize label
+            if (DifficultyManager.Instance != null)
+            {
+                difficultySlider.value = (int)DifficultyManager.Instance.currentLevel;
+                UpdateDifficultyLabel();
+            }
+        }
+    }
+
+    private void OnDifficultyChanged(float value)
+    {
+        if (DifficultyManager.Instance != null)
+        {
+            DifficultyManager.Instance.SetDifficulty((int)value);
+            UpdateDifficultyLabel();
+        }
+    }
+
+    private void UpdateDifficultyLabel()
+    {
+        if (difficultyLabel != null && DifficultyManager.Instance != null)
+        {
+            difficultyLabel.text = "Difficulty: " + DifficultyManager.Instance.GetDifficultyName();
+        }
     }
 
     private void OnDestroy()
@@ -74,7 +111,7 @@ public class UIManager : MonoBehaviour
     {
         if (scoreText != null)
         {
-            scoreText.text = score.ToString();
+            scoreText.text = "Score: " + score.ToString();
         }
     }
 
@@ -90,9 +127,14 @@ public class UIManager : MonoBehaviour
         if (homePanel != null) homePanel.SetActive(false);
         if (hudPanel != null) hudPanel.SetActive(true);
         
-        if (GameManager.instance != null)
+        if (GameManager.instance != null && ScoreManager.Instance != null && DifficultyManager.Instance != null)
         {
             GameManager.instance.StartGame();
+            if (hudHighScoreText != null)
+            {
+                ScoreStats stats = ScoreManager.Instance.GetStats(DifficultyManager.Instance.currentLevel);
+                hudHighScoreText.text = "All Time: " + stats.allTimeBest.ToString();
+            }
         }
     }
 
@@ -109,12 +151,18 @@ public class UIManager : MonoBehaviour
 
         if (finalScoreText != null && GameManager.instance != null)
         {
-            finalScoreText.text = GameManager.instance.GetScore().ToString();
+            finalScoreText.text = "Score: " + GameManager.instance.GetScore().ToString();
         }
 
-        if (highScoreText != null && GameManager.instance != null)
+        // Update Leaderboard
+        if (ScoreManager.Instance != null && DifficultyManager.Instance != null)
         {
-            highScoreText.text = "BEST: " + GameManager.instance.GetHighScore().ToString();
+             ScoreStats stats = ScoreManager.Instance.GetStats(DifficultyManager.Instance.currentLevel);
+             
+             if (difficultyModeText != null) difficultyModeText.text = DifficultyManager.Instance.GetDifficultyName().ToUpper() + " MODE";
+             if (todayBestText != null) todayBestText.text = "Today's Best: " + stats.dailyBest.ToString();
+             if (weekBestText != null) weekBestText.text = "Week's Best: " + stats.weeklyBest.ToString();
+             if (allTimeBestText != null) allTimeBestText.text = "All-Time Best: " + stats.allTimeBest.ToString();
         }
     }
 

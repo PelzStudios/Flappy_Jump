@@ -22,6 +22,20 @@ public class PlayerController : MonoBehaviour {
     {
         m_RigidBody = GetComponent<Rigidbody2D>();
         m_RigidBody.gravityScale = 0;
+        
+        ApplyDifficultySettings();
+    }
+
+    private void ApplyDifficultySettings()
+    {
+        if (DifficultyManager.Instance != null)
+        {
+            DifficultyProfile profile = DifficultyManager.Instance.GetCurrentProfile();
+            m_GravityScale = profile.gravityScale;
+            m_VerticalBumpAmount = profile.verticalJumpForce;
+            m_HorizontalBumpAmount = profile.horizontalJumpForce;
+            m_MaxSpeed = profile.maxSpeed;
+        }
     }
 
     void Update()
