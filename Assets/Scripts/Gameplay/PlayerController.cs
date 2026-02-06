@@ -65,4 +65,13 @@ public class PlayerController : MonoBehaviour {
         m_RigidBody.linearVelocity = Vector2.zero;
         m_RigidBody.AddForce((Vector3.up * m_VerticalBumpAmount + Vector3.right * m_HorizontalBumpAmount), ForceMode2D.Impulse);
     }
+    public void ChangeColor()
+    {
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            // Random vibrant color
+            sr.color = Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
+        }
+    }
 }

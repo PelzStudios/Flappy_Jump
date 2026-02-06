@@ -39,6 +39,7 @@ public class ScoreManager : MonoBehaviour
         if (score > currentAllTime)
         {
             PlayerPrefs.SetInt(keyAllTime, score);
+            Debug.Log($"[ScoreManager] New All-Time Best ({diffKey}): {score}");
         }
 
         // --- Daily ---
@@ -59,6 +60,7 @@ public class ScoreManager : MonoBehaviour
         if (score > dailyBest)
         {
             PlayerPrefs.SetInt(keyDailyScore, score);
+            Debug.Log($"[ScoreManager] New Daily Best ({diffKey}): {score}");
         }
 
         // --- Weekly ---
@@ -79,9 +81,11 @@ public class ScoreManager : MonoBehaviour
         if (score > weeklyBest)
         {
             PlayerPrefs.SetInt(keyWeeklyScore, score);
+            Debug.Log($"[ScoreManager] New Weekly Best ({diffKey}): {score}");
         }
 
         PlayerPrefs.Save();
+        Debug.Log($"[ScoreManager] Score Submitted: {score} for {diffKey}. Saved successfully.");
     }
 
     public ScoreStats GetStats(DifficultyLevel difficulty)

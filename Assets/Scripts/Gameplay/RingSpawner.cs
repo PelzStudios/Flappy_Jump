@@ -18,7 +18,7 @@ public class RingSpawner : MonoBehaviour
     [SerializeField] private ParticleSystem perfectCombo3;
 
     [HideInInspector] public int ringIndex;
-    [HideInInspector] public int consecutiveCombo = 1;
+    [HideInInspector] public int consecutiveCombo = 0;
 
     private bool hasSpawned = false;
     private bool hasBeenScored = false;
@@ -32,6 +32,14 @@ public class RingSpawner : MonoBehaviour
         {
             Debug.LogError("RingSpawner [" + ringIndex + "]: Player not assigned!");
         }
+
+        // Make rims slippery so player doesn't stick
+        PhysicsMaterial2D slipperyMat = new PhysicsMaterial2D("Slippery");
+        slipperyMat.friction = 0f;
+        slipperyMat.bounciness = 0.2f; // Slight bounce to help roll off
+
+        if (rimLeftCollider != null) rimLeftCollider.sharedMaterial = slipperyMat;
+        if (rimRightCollider != null) rimRightCollider.sharedMaterial = slipperyMat;
     }
 
     void Update()
@@ -80,10 +88,54 @@ public class RingSpawner : MonoBehaviour
         if (nextRing != null)
         {
             nextRing.ringIndex = ringIndex + 1;
+            nextRing.SetupRingType(); // Setup functionality for the NEW ring
             newRing.name = "Ring_" + nextRing.ringIndex;
         }
 
         hasSpawned = true;
+    }
+
+    public enum RingType
+    {
+        Normal,
+        ColorChange,
+        Slanted,
+        Shield
+    }
+
+    public RingType ringType = RingType.Normal;
+
+    private void SetupRingType()
+    {
+        // Reset rotation first
+        transform.rotation = Quaternion.identity;
+        
+        // Visual Reset (White)
+        SpriteRenderer[] srs = GetComponentsInChildren<SpriteRenderer>();
+        foreach(var s in srs) s.color = Color.white;
+
+        // Randomize Type (20% chance for special rings)
+        float rand = Random.value;
+        if (rand < 0.7f) ringType = RingType.Normal;
+        else if (rand < 0.8f) ringType = RingType.ColorChange;
+        else if (rand < 0.9f) ringType = RingType.Slanted;
+        else ringType = RingType.Shield;
+
+        // Apply Visuals
+        switch (ringType)
+        {
+            case RingType.ColorChange:
+                foreach(var s in srs) s.color = new Color(1f, 0.5f, 1f); // Pinkish
+                break;
+            case RingType.Slanted:
+                float tilt = Random.Range(15f, 25f);
+                if (Random.value > 0.5f) tilt = -tilt;
+                transform.rotation = Quaternion.Euler(0, 0, tilt);
+                break;
+            case RingType.Shield:
+                foreach(var s in srs) s.color = new Color(0.4f, 0.8f, 1f); // Cyan
+                break;
+        }
     }
 
     // Called when player enters center trigger
@@ -102,6 +154,13 @@ public class RingSpawner : MonoBehaviour
             return;
         }
 
+        // Apply Special Ring Effects
+        if (ringType == RingType.Shield)
+        {
+             GameManager.instance.ActivateShield();
+             if (UIManager.instance != null) UIManager.instance.ShowComboPopup("SHIELD!", nextRing != null ? nextRing.consecutiveCombo : 0);
+        }
+
         // Player entered from top (moving down) = SCORE
         Debug.Log("Ring [" + ringIndex + "]: Entered from TOP (moving down) - SCORING!");
 
@@ -110,44 +169,109 @@ public class RingSpawner : MonoBehaviour
             // Check if rims were touched
             bool touchedLeftRim = rimLeftTouched;
             bool touchedRightRim = rimRightTouched;
+            
+            // STRICTER CHECK: Ensure player is close to center x-axis (within 0.5f)
+            float xOffset = Mathf.Abs(playerRb.transform.position.x - transform.position.x);
+            bool isCentered = xOffset < 0.5f;
 
-            if (!touchedLeftRim && !touchedRightRim)
+            if (!touchedLeftRim && !touchedRightRim && isCentered)
             {
-                // Perfect pass - no rim touch
+                // Perfect pass
                 nextRing.consecutiveCombo = consecutiveCombo + 1;
+                
+                // Color Change Ring Logic (Only on Perfect)
+                if (ringType == RingType.ColorChange)
+                {
+                    PlayerController pc = playerRb.GetComponent<PlayerController>();
+                    if (pc != null) pc.ChangeColor();
+                }
 
-                if (nextRing.consecutiveCombo == 2)
+                string comboText = "PERFECT";
+                string multiplierText = ""; 
+
+                // Show multiplier starting from x1
+                if (nextRing.consecutiveCombo >= 1)
                 {
-                    GameManager.instance.ChangeScore(4);
-                    PlayParticle(perfectCombo1);
-                    if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.1f, 0.1f);
-                    Debug.Log("Ring [" + ringIndex + "]: Perfect x2! +4 points");
+                    multiplierText = " x" + nextRing.consecutiveCombo.ToString();
                 }
-                else if (nextRing.consecutiveCombo == 3)
+
+                comboText += multiplierText;
+                
+                int scoreMultiplier = Mathf.Min(nextRing.consecutiveCombo, 4); 
+                // To prevent Perfect x1 being same as Rim Hit, maybe boost base momentarily?
+                // For now, adhere to multiplier logic: 2 * 1 = 2. 
+                int baseScore = 2;
+                int points = baseScore * scoreMultiplier;
+                
+                GameManager.instance.ChangeScore(points);
+
+                // FX Logic
+                if (nextRing.consecutiveCombo >= 1)
                 {
-                    GameManager.instance.ChangeScore(6);
-                    PlayParticle(perfectCombo2);
-                    if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.15f, 0.15f);
-                    Debug.Log("Ring [" + ringIndex + "]: Perfect x3! +6 points");
+                     if (nextRing.consecutiveCombo < 4) 
+                     {
+                         PlayParticle(perfectCombo1);
+                         if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.1f, 0.1f);
+                     }
+                     else
+                     {
+                         PlayParticle(perfectCombo2);
+                         if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.2f, 0.2f);
+                     }
                 }
-                else if (nextRing.consecutiveCombo > 3)
+                
+                if (UIManager.instance != null)
                 {
-                    GameManager.instance.ChangeScore(8);
-                    PlayParticle(perfectCombo3);
-                    if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.2f, 0.2f);
-                    Debug.Log("Ring [" + ringIndex + "]: Perfect x4+! +8 points");
+                    // Always show popup for any perfect
+                    UIManager.instance.ShowComboPopup(comboText, nextRing.consecutiveCombo);
                 }
+                Debug.Log("Ring [" + ringIndex + "]: " + comboText + " (" + points + " pts)");
+                
+
             }
             else
             {
-                // Hit rim - reset combo
-                nextRing.consecutiveCombo = 1;
+                // Hit rim or not centered - reset combo to 0
+                nextRing.consecutiveCombo = 0;
                 GameManager.instance.ChangeScore(2);
                 StopAllParticles();
-                Debug.Log("Ring [" + ringIndex + "]: Hit rim! +2 points");
+                Debug.Log("Ring [" + ringIndex + "]: Clean but not perfect. Rim touched: " + (touchedLeftRim || touchedRightRim) + ", Centered: " + isCentered);
             }
         }
 
+        StartCoroutine(FadeAndDestroy());
+    }
+
+    private IEnumerator FadeAndDestroy()
+    {
+        // Disable all colliders immediately so player doesn't hit them while fading
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+        foreach (Collider2D col in colliders)
+        {
+            col.enabled = false;
+        }
+
+        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>();
+        float duration = 0.5f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
+            
+            foreach (var sr in renderers)
+            {
+                if (sr != null)
+                {
+                    Color c = sr.color;
+                    c.a = alpha;
+                    sr.color = c;
+                }
+            }
+            yield return null;
+        }
+        
         Destroy(gameObject);
     }
 

@@ -45,6 +45,7 @@ public class GameManager : MonoBehaviour
     {
         isGameActive = true;
         isGameOver = false;
+        hasShield = false;
         score = 0;
         
         if (UIManager.instance != null)
@@ -68,8 +69,19 @@ public class GameManager : MonoBehaviour
         Debug.Log("Score changed by: " + amount + " | Total: " + score);
     }
 
+    private bool hasShield = false;
+
     public void SetGameOver()
     {
+        if (hasShield)
+        {
+            hasShield = false;
+            Debug.Log("Shield Confirmed! Saved from Game Over!");
+            if (UIManager.instance != null) UIManager.instance.ShowComboPopup("SHIELD SAVED!", 0); // Re-using popup for feedback
+            if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.3f, 0.3f);
+            return; // SAVE THE PLAYER
+        }
+
         if (!isGameOver)
         {
             isGameOver = true;
@@ -85,6 +97,18 @@ public class GameManager : MonoBehaviour
                 OnGameOver.Invoke();
             }
         }
+    }
+
+    public void ActivateShield()
+    {
+        hasShield = true;
+        Debug.Log("Shield Activated!");
+        // Optional: Notify UI
+    }
+
+    public bool HasShield()
+    {
+        return hasShield;
     }
 
     public bool GetGameOver()
