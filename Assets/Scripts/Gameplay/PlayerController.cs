@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour {
     {
         m_RigidBody = GetComponent<Rigidbody2D>();
         m_RigidBody.gravityScale = 0;
+        isGravityInverted = false;
         
         ApplyDifficultySettings();
     }
@@ -54,6 +55,8 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
+    private bool isGravityInverted = false;
+
     private void Jump()
     {
         if (m_Animator != null)
@@ -61,9 +64,45 @@ public class PlayerController : MonoBehaviour {
             m_Animator.Play("FlapWings");
         }
         
-        m_RigidBody.gravityScale = m_GravityScale;
+        // Ensure gravity is active (started)
+        float gravityDir = isGravityInverted ? -1f : 1f;
+        m_RigidBody.gravityScale = m_GravityScale * gravityDir;
+        
         m_RigidBody.linearVelocity = Vector2.zero;
-        m_RigidBody.AddForce((Vector3.up * m_VerticalBumpAmount + Vector3.right * m_HorizontalBumpAmount), ForceMode2D.Impulse);
+        
+        // Flip Jump Direction
+        Vector3 jumpForce = Vector3.up * m_VerticalBumpAmount * gravityDir + Vector3.right * m_HorizontalBumpAmount;
+        m_RigidBody.AddForce(jumpForce, ForceMode2D.Impulse);
+    }
+
+    public void ToggleGravity()
+    {
+        isGravityInverted = !isGravityInverted;
+        
+        // Flip Sprite
+        Vector3 scale = transform.localScale;
+        scale.y = Mathf.Abs(scale.y) * (isGravityInverted ? -1f : 1f);
+        transform.localScale = scale;
+
+        // Apply immediate gravity change if mid-air
+        if (m_RigidBody.gravityScale != 0)
+        {
+            float gravityDir = isGravityInverted ? -1f : 1f;
+            m_RigidBody.gravityScale = m_GravityScale * gravityDir;
+        }
+
+        // Add short immunity to prevent immediate death from floor/ceiling impact
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.ActivateImmunity(0.5f);
+        }
+        
+        Debug.Log("Gravity Inverted: " + isGravityInverted);
+    }
+
+    public bool IsGravityInverted()
+    {
+        return isGravityInverted;
     }
     public void ChangeColor()
     {

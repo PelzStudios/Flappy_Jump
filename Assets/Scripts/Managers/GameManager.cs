@@ -71,8 +71,30 @@ public class GameManager : MonoBehaviour
 
     private bool hasShield = false;
 
+    private float immunityTimer = 0f;
+
+    private void Update()
+    {
+        if (immunityTimer > 0)
+        {
+            immunityTimer -= Time.deltaTime;
+        }
+    }
+
+    public void ActivateImmunity(float duration)
+    {
+        immunityTimer = duration;
+        Debug.Log("Immunity Activated for " + duration + "s");
+    }
+
     public void SetGameOver()
     {
+        if (immunityTimer > 0)
+        {
+            Debug.Log("Game Over blocked by Immunity.");
+            return;
+        }
+
         if (hasShield)
         {
             hasShield = false;

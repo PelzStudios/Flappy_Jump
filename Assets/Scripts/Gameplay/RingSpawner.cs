@@ -100,7 +100,8 @@ public class RingSpawner : MonoBehaviour
         Normal,
         ColorChange,
         Slanted,
-        Shield
+        Shield,
+        GravityFlip
     }
 
     public RingType ringType = RingType.Normal;
@@ -114,12 +115,36 @@ public class RingSpawner : MonoBehaviour
         SpriteRenderer[] srs = GetComponentsInChildren<SpriteRenderer>();
         foreach(var s in srs) s.color = Color.white;
 
-        // Randomize Type (20% chance for special rings)
+        // Randomize Type
         float rand = Random.value;
-        if (rand < 0.7f) ringType = RingType.Normal;
-        else if (rand < 0.8f) ringType = RingType.ColorChange;
-        else if (rand < 0.9f) ringType = RingType.Slanted;
-        else ringType = RingType.Shield;
+        
+        bool isGravityInverted = false;
+        if (player != null)
+        {
+             PlayerController pc = player.GetComponent<PlayerController>();
+             if (pc != null) isGravityInverted = pc.IsGravityInverted();
+        }
+
+        if (isGravityInverted)
+        {
+            // HIGH chance to spawn a Flip Ring to let player escape
+            // 40% Chance to Flip Back
+            if (rand < 0.4f) ringType = RingType.GravityFlip;
+            else if (rand < 0.7f) ringType = RingType.Normal;
+            else if (rand < 0.8f) ringType = RingType.ColorChange;
+            else if (rand < 0.9f) ringType = RingType.Slanted;
+            else ringType = RingType.Shield;
+        }
+        else
+        {
+            // Normal Logic (Rare Flip)
+            // 10% Chance to Flip
+            if (rand < 0.65f) ringType = RingType.Normal;
+            else if (rand < 0.75f) ringType = RingType.ColorChange;
+            else if (rand < 0.85f) ringType = RingType.Slanted;
+            else if (rand < 0.90f) ringType = RingType.Shield;
+            else ringType = RingType.GravityFlip; 
+        }
 
         // Apply Visuals
         switch (ringType)
@@ -135,6 +160,9 @@ public class RingSpawner : MonoBehaviour
             case RingType.Shield:
                 foreach(var s in srs) s.color = new Color(0.4f, 0.8f, 1f); // Cyan
                 break;
+            case RingType.GravityFlip:
+                foreach(var s in srs) s.color = new Color(0.6f, 0.2f, 1f); // Purple
+                break;
         }
     }
 
@@ -145,10 +173,54 @@ public class RingSpawner : MonoBehaviour
 
         hasBeenScored = true;
 
-        // Check velocity - if moving UP (from bottom) = game over
-        if (playerRb.linearVelocity.y > 0.5f)
+        // Check velocity
+        bool isMovingUp = playerRb.linearVelocity.y > 0.5f;
+        bool isMovingDown = playerRb.linearVelocity.y < -0.5f;
+
+        // If Inverted: Moving DOWN is bad (because you "fall" UP).
+        // Wait... If gravity is flipped, Gravity is UP.
+        // So default state is falling UP. You tap to go DOWN.
+        // So you approach the ring from the BOTTOM always? No.
+        // In Normal: You bounce up, then fall DOWN through the ring.
+        // In Inverted: You bounce down, then fall UP through the ring.
+        // So in Inverted: You must be moving UP (Positive Y) to score.
+        // So if Inverted: Moving DOWN (Negative Y) is the "bounce" phase, which is OK?
+        // No, you shouldn't enter the trigger during the bounce phase.
+        
+        PlayerController pc = playerRb.GetComponent<PlayerController>();
+        bool isInverted = (pc != null && pc.IsGravityInverted());
+
+        // Condition for ending Gravity Flip:
+        // Passing through ANY GravityFlip ring toggles it. 
+        // So if you are currently Inverted, and you hit a GravityFlip ring (Purple), it will toggle back to Normal.
+        // This is handled in the Logic Block below by pc.ToggleGravity() which flips the boolean.
+        
+        // Strict Direction Check:
+        // Normal (Gravity Down) -> Must approach from TOP (falling down, velocity < 0)
+        // Inverted (Gravity Up) -> Must approach from BOTTOM (falling up?, velocity > 0)
+        
+        // Wait, standard Flappy Bird mechanics:
+        // Normal: You Tap (Velocity > 0). You Fall (Velocity < 0). Score happens when falling through ring.
+        // Inverted: You Tap (Velocity < 0). You Fall Up (Velocity > 0). Score happens when falling UP through ring.
+        
+        bool isFallingDown = playerRb.linearVelocity.y < 0;
+        bool isFallingUp = playerRb.linearVelocity.y > 0;
+        
+        bool wrongDirection;
+        if (!isInverted)
         {
-            Debug.Log("Ring [" + ringIndex + "]: Entered from BOTTOM (moving up) - Game Over!");
+            // Normal: Must be falling down (Velocity < 0)
+            wrongDirection = !isFallingDown;
+        }
+        else
+        {
+            // Inverted: Must be falling UP (Velocity > 0)
+            wrongDirection = !isFallingUp;
+        }
+
+        if (wrongDirection)
+        {
+            Debug.Log("Ring [" + ringIndex + "]: Wrong Direction Entry (Inverted: " + isInverted + ") - Game Over!");
             GameManager.instance.SetGameOver();
             Destroy(gameObject);
             return;
@@ -159,6 +231,12 @@ public class RingSpawner : MonoBehaviour
         {
              GameManager.instance.ActivateShield();
              if (UIManager.instance != null) UIManager.instance.ShowComboPopup("SHIELD!", nextRing != null ? nextRing.consecutiveCombo : 0);
+        }
+        else if (ringType == RingType.GravityFlip)
+        {
+            if (UIManager.instance != null) UIManager.instance.ShowComboPopup("GRAVITY FLIP!", 0);
+             PlayerController playerController = playerRb.GetComponent<PlayerController>();
+             if (playerController != null) playerController.ToggleGravity();
         }
 
         // Player entered from top (moving down) = SCORE
@@ -182,8 +260,8 @@ public class RingSpawner : MonoBehaviour
                 // Color Change Ring Logic (Only on Perfect)
                 if (ringType == RingType.ColorChange)
                 {
-                    PlayerController pc = playerRb.GetComponent<PlayerController>();
-                    if (pc != null) pc.ChangeColor();
+                    PlayerController playerController = playerRb.GetComponent<PlayerController>();
+                    if (playerController != null) playerController.ChangeColor();
                 }
 
                 string comboText = "PERFECT";
