@@ -149,6 +149,12 @@ public class UIManager : MonoBehaviour
 
     private void OnPlayClicked()
     {
+        // Play button click sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayButtonClickSound();
+        }
+        
         if (homePanel != null) homePanel.SetActive(false);
         if (hudPanel != null) hudPanel.SetActive(true);
         
@@ -262,6 +268,12 @@ public class UIManager : MonoBehaviour
 
     private void OnRestartClicked()
     {
+        // Play button click sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayButtonClickSound();
+        }
+        
         if (GameManager.instance != null)
         {
             GameManager.instance.RestartGame();
@@ -270,6 +282,12 @@ public class UIManager : MonoBehaviour
 
     private void OnHomeClicked()
     {
+        // Play button click sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayButtonClickSound();
+        }
+        
         // Reloading the scene basically resets everything, 
         // and since Start logic defaults to Home, this works.
         if (GameManager.instance != null)

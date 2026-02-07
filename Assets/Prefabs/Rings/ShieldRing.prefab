@@ -91,7 +91,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6922275098939051900}
-  - component: {fileID: 2287667091332716019}
   m_Layer: 0
   m_Name: ShieldRing
   m_TagString: Untagged
@@ -119,29 +118,6 @@ Transform:
   - {fileID: 4583559629906229747}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2287667091332716019
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 903207959898360061}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19a537e41216d9b4e8dd4cd2059245cd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player: {fileID: 0}
-  missedRange: 3
-  spawnDistance: -3
-  rimLeftCollider: {fileID: 1146415958642391130}
-  rimRightCollider: {fileID: 6694220645298934758}
-  perfectCombo1: {fileID: 0}
-  perfectCombo2: {fileID: 0}
-  perfectCombo3: {fileID: 0}
-  ringIndex: 0
-  consecutiveCombo: 1
-  ringType: 3
 --- !u!1 &1129378492942729076
 GameObject:
   m_ObjectHideFlags: 0

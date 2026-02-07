@@ -23,7 +23,6 @@ public class GameManager : MonoBehaviour
         }
         else if (instance != this)
         {
-            // Destroy duplicate instance
             Destroy(gameObject);
         }
     }
@@ -34,6 +33,12 @@ public class GameManager : MonoBehaviour
         isGameActive = false;
         score = 0;
         isGameOver = false;
+        
+        // Play background music on menu screen
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayBackgroundMusic();
+        }
         
         if (UIManager.instance != null)
         {
@@ -47,6 +52,12 @@ public class GameManager : MonoBehaviour
         isGameOver = false;
         hasShield = false;
         score = 0;
+        
+        // STOP background music when game starts
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopMusic();
+        }
         
         if (UIManager.instance != null)
         {
@@ -70,7 +81,6 @@ public class GameManager : MonoBehaviour
     }
 
     private bool hasShield = false;
-
     private float immunityTimer = 0f;
 
     private void Update()
@@ -98,16 +108,29 @@ public class GameManager : MonoBehaviour
         if (hasShield)
         {
             hasShield = false;
+            DeactivateShieldVFX();
             Debug.Log("Shield Confirmed! Saved from Game Over!");
-            if (UIManager.instance != null) UIManager.instance.ShowComboPopup("SHIELD SAVED!", 0); // Re-using popup for feedback
+            if (UIManager.instance != null) UIManager.instance.ShowComboPopup("SHIELD SAVED!", 0);
             if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.3f, 0.3f);
-            return; // SAVE THE PLAYER
+            return;
         }
 
         if (!isGameOver)
         {
             isGameOver = true;
             Debug.Log("Game Over! Final Score: " + score);
+            
+            // Play game over sound
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayGameOverSound();
+            }
+            
+            // Play background music on game over screen
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayBackgroundMusic();
+            }
             
             if (ScoreManager.Instance != null && DifficultyManager.Instance != null)
             {
@@ -125,7 +148,30 @@ public class GameManager : MonoBehaviour
     {
         hasShield = true;
         Debug.Log("Shield Activated!");
-        // Optional: Notify UI
+        
+        // Activate player shield VFX
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            ShieldVFX shieldVFX = player.GetComponentInChildren<ShieldVFX>();
+            if (shieldVFX != null)
+            {
+                shieldVFX.ActivateShield();
+            }
+        }
+    }
+
+    private void DeactivateShieldVFX()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            ShieldVFX shieldVFX = player.GetComponentInChildren<ShieldVFX>();
+            if (shieldVFX != null)
+            {
+                shieldVFX.DeactivateShield();
+            }
+        }
     }
 
     public bool HasShield()
@@ -143,12 +189,14 @@ public class GameManager : MonoBehaviour
         return score;
     }
 
-
-
-
-
     public void RestartGame()
     {
+        // Play button click sound on restart
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayButtonClickSound();
+        }
+        
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

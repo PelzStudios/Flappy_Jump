@@ -96,7 +96,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7912013070296481919}
-  - component: {fileID: 6879953866246388211}
   m_Layer: 0
   m_Name: Slant_Ring
   m_TagString: Untagged
@@ -123,29 +122,6 @@ Transform:
   - {fileID: 1382963020456652960}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6879953866246388211
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 982471337735457280}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19a537e41216d9b4e8dd4cd2059245cd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player: {fileID: 0}
-  missedRange: 3
-  spawnDistance: -3
-  rimLeftCollider: {fileID: 3457683715997406702}
-  rimRightCollider: {fileID: 7918059651137115839}
-  perfectCombo1: {fileID: 0}
-  perfectCombo2: {fileID: 0}
-  perfectCombo3: {fileID: 0}
-  ringIndex: 0
-  consecutiveCombo: 1
-  ringType: 2
 --- !u!1 &1506571931541881724
 GameObject:
   m_ObjectHideFlags: 0
